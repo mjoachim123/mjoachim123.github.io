@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Number Guessing Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f5ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .game-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .difficulty-btn {
+            margin: 5px;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .difficulty-btn.easy { background-color: #4CAF50; color: white; }
+        .difficulty-btn.medium { background-color: #FFA500; color: white; }
+        .difficulty-btn.hard { background-color: #f44336; color: white; }
+
+        .difficulty-btn:hover {
+            opacity: 0.9;
+        }
+
+        input {
+            width: 100px;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        #submitGuess {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #submitGuess:hover {
+            background-color: #1976D2;
+        }
+
+        #message {
+            margin: 20px 0;
+            font-size: 18px;
+            min-height: 27px;
+        }
+
+        #stats {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        .hot { color: #f44336; }
+        .warm { color: #FFA500; }
+        .cool { color: #2196F3; }
+
+        #hint {
+            font-size: 14px;
+            color: #666;
+            margin: 10px 0;
+            font-style: italic;
+        }
+
+        #newGame {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Number Guessing Game</h1>
+        <div id="difficulty-select">
+            <p>Select Difficulty:</p>
+            <button class="difficulty-btn easy" onclick="setDifficulty('easy')">Easy (1-50)</button>
+            <button class="difficulty-btn medium" onclick="setDifficulty('medium')">Medium (1-100)</button>
+            <button class="difficulty-btn hard" onclick="setDifficulty('hard')">Hard (1-200)</button>
+        </div>
+        <div id="game" style="display: none;">
+            <p>Guess a number between <span id="range"></span></p>
+            <input type="number" id="guess" min="1">
+            <br>
+            <button id="submitGuess" onclick="checkGuess()">Submit Guess</button>
+            <p id="message"></p>
+            <p id="hint"></p>
+            <button id="newGame" onclick="resetGame()">New Game</button>
+            <div id="stats">
+                <p>Attempts: <span id="attempts">0</span></p>
+                <p>Best Score: <span id="bestScore">-</span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let targetNumber;
+        let attempts = 0;
+        let maxNumber;
+        let gameActive = false;
+        let bestScores = {
+            easy: Infinity,
+            medium: Infinity,
+            hard: Infinity
+        };
+        let currentDifficulty;
+
+        function setDifficulty(difficulty) {
+            currentDifficulty = difficulty;
+            switch(difficulty) {
+                case 'easy':
+                    maxNumber = 50;
+                    break;
+                case 'medium':
+                    maxNumber = 100;
+                    break;
+                case 'hard':
+                    maxNumber = 200;
+                    break;
+            }
+            document.getElementById('range').textContent = `1 and ${maxNumber}`;
+            document.getElementById('difficulty-select').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+            startGame();
+        }
+
+        function startGame() {
+            targetNumber = Math.floor(Math.random() * maxNumber) + 1;
+            attempts = 0;
+            gameActive = true;
+            document.getElementById('attempts').textContent = attempts;
+            document.getElementById('message').textContent = '';
+            document.getElementById('hint').textContent = '';
+            document.getElementById('newGame').style.display = 'none';
+            document.getElementById('guess').value = '';
+        }
+
+        function checkGuess() {
+            if (!gameActive) return;
+
+            const guessInput = document.getElementById('guess');
+            const guess = parseInt(guessInput.value);
+            const messageElement = document.getElementById('message');
+            const hintElement = document.getElementById('hint');
+
+            if (isNaN(guess) || guess < 1 || guess > maxNumber) {
+                messageElement.textContent = `Please enter a valid number between 1 and ${maxNumber}.`;
+                return;
+            }
+
+            attempts++;
+            document.getElementById('attempts').textContent = attempts;
+
+            const difference = Math.abs(targetNumber - guess);
+            let message = '';
+            let messageClass = '';
+
+            if (guess === targetNumber) {
+                message = `🎉 Congratulations! You found the number in ${attempts} attempts!`;
+                gameActive = false;
+                document.getElementById('newGame').style.display = 'inline-block';
+                updateBestScore();
+            } else {
+                if (difference <= 5) {
+                    message = "Very Hot! 🔥";
+                    messageClass = 'hot';
+                } else if (difference <= 10) {
+                    message = "Hot! 🔥";
+                    messageClass = 'hot';
+                } else if (difference <= 20) {
+                    message = "Warm 😊";
+                    messageClass = 'warm';
+                } else {
+                    message = "Cold ❄️";
+                    messageClass = 'cool';
+                }
+
+                // Provide hints
+                let hint = guess < targetNumber ? "Try a higher number!" : "Try a lower number!";
+                if (attempts % 3 === 0) {
+                    const range = Math.floor(difference / 10) * 10;
+                    hint += ` You're about ${range} numbers away.`;
+                }
+                hintElement.textContent = hint;
+            }
+
+            messageElement.textContent = message;
+            messageElement.className = messageClass;
+            guessInput.value = '';
+            guessInput.focus();
+        }
+
+        function updateBestScore() {
+            if (attempts < bestScores[currentDifficulty]) {
+                bestScores[currentDifficulty] = attempts;
+                document.getElementById('bestScore').textContent = attempts;
+            }
+        }
+
+        function resetGame() {
+            startGame();
+        }
+
+        // Handle Enter key
+        document.getElementById('guess').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkGuess();
+            }
+        });
+    </script>
+</body>
+</html>
